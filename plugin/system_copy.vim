@@ -23,6 +23,7 @@ function! s:system_copy(type, ...) abort
     silent exe "normal! `[v`]"
     silent exe "'<,'>w !" . command
   endif
+  silent call system(command, getreg('@'))
   redraw | echohl String | echon 'Copied to clipboard using: ' . command | echohl None
 endfunction
 
