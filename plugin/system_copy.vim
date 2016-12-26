@@ -18,10 +18,12 @@ function! s:system_copy(type, ...) abort
     let lines = { 'start': line("'["), 'end': line("']") }
     silent exe lines.start . "," . lines.end . "w !" . command
   elseif mode == s:visual || mode == s:blockwise
-    silent exe "'<,'>w !" . command
+    let selection = s:get_visual_selection()
+    silent call system('echo ' . shellescape(selection) . '|' . command)
   else
     silent exe "normal! `[v`]"
-    silent exe "'<,'>w !" . command
+    let selection = s:get_visual_selection()
+    silent call system('echo ' . shellescape(selection) . '|' . command)
   endif
   redraw | echohl String | echon 'Copied to clipboard using: ' . command | echohl None
 endfunction
@@ -85,6 +87,16 @@ function! s:PasteCommandForCurrentOS()
   elseif os == s:linux
     return 'xsel --clipboard --output'
   endif
+endfunction
+
+" http://stackoverflow.com/a/6271254
+function! s:get_visual_selection()
+  let [lnum1, col1] = getpos("'<")[1:2]
+  let [lnum2, col2] = getpos("'>")[1:2]
+  let lines = getline(lnum1, lnum2)
+  let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
+  let lines[0] = lines[0][col1 - 1:]
+  return join(lines, "\n")
 endfunction
 
 xnoremap <silent> <Plug>SystemCopy :<C-U>call <SID>system_copy(visualmode(),visualmode() ==# 'V' ? 1 : 0)<CR>
